@@ -74,7 +74,7 @@ export default function Header() {
           </Link>
 
           {/* Navigation - Show Sign In button only if not logged in and not on login page */}
-          {!isNotLoginPage && !isLoggedIn && !authLoading ? (
+          {isNotLoginPage && !isLoggedIn && !authLoading ? (
             <div className="hidden md:flex items-center space-x-8">
               <Link href="/Login">
                 <button
