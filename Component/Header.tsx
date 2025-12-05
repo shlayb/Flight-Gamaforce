@@ -203,14 +203,33 @@ export default function Header() {
                         animation: isMenuOpen ? 'slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s both' : 'none',
                       }}
                     >
-                      <button
-                        onClick={() => getAuth().signOut()}
-                        className="w-full px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg relative overflow-hidden group"
-                        style={{ background: 'rgba(239, 68, 68, 0.9)' }}
-                      >
-                        <span className="relative z-10">Sign Out</span>
-                        <div className="absolute inset-0 bg-black/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                      </button>
+                        <button
+                          onClick={() => {
+                            import('sweetalert2').then((module) => {
+                              const Swal = module.default;
+                              Swal.fire({
+                                title: 'Sign Out?',
+                                text: 'Are you sure you want to sign out?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#ef4444',
+                                cancelButtonColor: '#6b7280',
+                                confirmButtonText: 'Yes, sign out',
+                                cancelButtonText: 'Cancel',
+                              }).then((result: { isConfirmed: boolean }) => {
+                                if (result.isConfirmed) {
+                                  getAuth().signOut();
+                                  window.location.reload();
+                                }
+                              });
+                            });
+                          }}
+                          className="w-full px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg relative overflow-hidden group"
+                          style={{ background: 'rgba(239, 68, 68, 0.9)' }}
+                        >
+                          <span className="relative z-10">Sign Out</span>
+                          <div className="absolute inset-0 bg-black/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                        </button>
                     </div>
                   </div>
                 )}
