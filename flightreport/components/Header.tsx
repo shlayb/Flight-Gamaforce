@@ -90,6 +90,9 @@ export default function Header() {
           {isLoggedIn && !authLoading ? (
             <div className="hidden md:flex items-center space-x-4">
               <span className="text-white text-sm">Welcome, {auth.currentUser?.displayName || 'User'}</span>
+              <Link href="/settings" className="px-4 py-2 text-sm font-semibold text-white/90 hover:text-white transition-colors bg-white/10 rounded-xl hover:bg-white/20">
+                Settings
+              </Link>
               <button
                 onClick={() => {
                   if (confirm('Are you sure you want to sign out?')) {
@@ -182,6 +185,23 @@ export default function Header() {
                           style={{ background: 'rgba(255, 206, 18, 0.9)' }}
                         >
                           <span className="relative z-10">Flight History</span>
+                          <div className="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                        </button>
+                      </Link>
+                    </div>
+
+                    {/* Settings Button */}
+                    <div
+                      style={{
+                        animation: isMenuOpen ? 'slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s both' : 'none',
+                      }}
+                    >
+                      <Link href="/settings" onClick={() => setIsMenuOpen(false)}>
+                        <button
+                          className="w-full px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg relative overflow-hidden group"
+                          style={{ background: 'rgba(255, 206, 18, 0.9)' }}
+                        >
+                          <span className="relative z-10">Settings</span>
                           <div className="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                         </button>
                       </Link>

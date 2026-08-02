@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, FileDown, CheckCircle2, Loader2 } from 'lucide-react';
-import formConfig from '../../../data/formConfig.json';
+import defaultFormConfig from '../../../data/formConfig.json';
 import { db, auth } from '../../../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
@@ -18,9 +18,11 @@ export default function EditReport() {
   const [user, loadingAuth] = useAuthState(auth);
   
   const [formData, setFormData] = useState<any>({});
+  const [formConfig, setFormConfig] = useState<any>(defaultFormConfig);
   const [isSaving, setIsSaving] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingConfig, setLoadingConfig] = useState(true);
   const pdfRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,6 +34,21 @@ export default function EditReport() {
         if (!email.endsWith('@mail.ugm.ac.id') && !email.endsWith('@ugm.ac.id')) {
           auth.signOut();
           router.push('/Login');
+        } else {
+          const fetchConfig = async () => {
+            try {
+              const docRef = doc(db, 'settings', 'formConfig');
+              const docSnap = await getDoc(docRef);
+              if (docSnap.exists()) {
+                setFormConfig(docSnap.data());
+              }
+            } catch (err) {
+              console.error("Error fetching config:", err);
+            } finally {
+              setLoadingConfig(false);
+            }
+          };
+          fetchConfig();
         }
       }
     }
@@ -202,7 +219,7 @@ export default function EditReport() {
     return <div className="min-h-screen flex items-center justify-center text-biruGelap"><Loader2 className="animate-spin w-10 h-10" /></div>;
   }
 
-  if (isLoading) {
+  if (isLoading || loadingConfig) {
     return <div className="min-h-screen flex items-center justify-center text-biruGelap"><Loader2 className="animate-spin w-10 h-10" /></div>;
   }
 
