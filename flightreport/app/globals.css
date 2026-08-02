@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@theme {
+  --color-biruGelap: #172D5D;
+  --color-kuning: #FFCE12;
+}
+:root {
+  --background: #f8fafc; /* Light slate/white */
+  --foreground: #172D5D; /* biruGelap */
+  --accent: #FFCE12; /* kuning */
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism utils */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(23, 45, 93, 0.1); /* biruGelap with low opacity */
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(23, 45, 93, 0.15);
+  box-shadow: 0 4px 30px rgba(23, 45, 93, 0.1);
+}
+
+/* Print specific styles for PDF */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+}
