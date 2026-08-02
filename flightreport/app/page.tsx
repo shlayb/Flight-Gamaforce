@@ -108,7 +108,7 @@ export default function Home() {
           <div className="container mx-auto px-8 pt-36 h-full flex flex-col justify-center">
             {/* Logo with fade in animation */}
             <div className="flex justify-center mb-16 animate-in fade-in slide-in-from-top duration-700">
-              <Image src="/jagat saksana dirga.svg" alt="jagat saksana dirga Logo" width={800} height={75} className="max-md:w-96 max-md:h-auto drop-shadow-2xl" />
+              <Image src="/jagat saksana dirga.svg" alt="jagat saksana dirga Logo" width={800} height={75} priority style={{ height: 'auto' }} className="max-md:w-96 drop-shadow-2xl" />
             </div>
 
             {/* Main Cards Container */}

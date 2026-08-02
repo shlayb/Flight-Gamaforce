@@ -1,7 +1,8 @@
 import React from 'react';
-import formConfig from '../data/formConfig.json';
+
 // Props will receive all the state data from the form
-export const PdfTemplate = React.forwardRef<HTMLDivElement, { data: any }>(({ data }, ref) => {
+export const PdfTemplate = React.forwardRef<HTMLDivElement, { data: any, config: any }>(({ data, config }, ref) => {
+  if (!config) return null;
   return (
     <div
       ref={ref}
@@ -25,14 +26,14 @@ export const PdfTemplate = React.forwardRef<HTMLDivElement, { data: any }>(({ da
         {/* Logo */}
         <div style={{ margin: '0 auto 10px', display: 'flex', justifyContent: 'center' }}>
           <img 
-            src="/khageswara-logo.png" 
-            alt="Khageswara Logo" 
+            src={`/teams/${data.team || 'khageswara'}.png`} 
+            alt={`${(data.team || 'khageswara').toUpperCase()} Logo`} 
             style={{ height: '80px', objectFit: 'contain' }} 
             crossOrigin="anonymous"
           />
         </div>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0' }}>
-          FLIGHT REPORT KHAGESWARA {new Date().getFullYear()}
+          FLIGHT REPORT {(data.team || 'KHAGESWARA').toUpperCase()} {new Date().getFullYear()}
         </h1>
         {data.link_video && (
           <p style={{ color: '#3b82f6', fontWeight: 'bold', marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -105,7 +106,7 @@ export const PdfTemplate = React.forwardRef<HTMLDivElement, { data: any }>(({ da
       <div style={{ marginBottom: '20px' }}>
         <h2 style={{ fontSize: '16px', fontWeight: 'bold', textDecoration: 'underline', marginBottom: '5px' }}>CHECKLIST PERSIAPAN DIVISI</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '15px' }}>
-          {formConfig.checklistDivisi.map((divisi: any, index: number) => (
+          {config.checklistDivisi.map((divisi: any, index: number) => (
             <div key={divisi.id || index} style={{ width: '45%' }}>
               <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '5px 0' }}>{divisi.title}</h3>
               <ul style={{ margin: '0 0 0 20px', padding: 0 }}>
@@ -125,9 +126,9 @@ export const PdfTemplate = React.forwardRef<HTMLDivElement, { data: any }>(({ da
         <h2 style={{ fontSize: '16px', fontWeight: 'bold', textDecoration: 'underline', marginBottom: '5px' }}>SEBELUM TERBANG</h2>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <tbody>
-            <tr><td style={{ width: '30%' }}>Baterai pusher</td><td>: {data.pre_baterai_pusher || '-'}</td></tr>
-            <tr><td>Baterai VTOL</td><td>: {data.pre_baterai_vtol || '-'}</td></tr>
-            <tr><td>Baterai remot</td><td>: {data.pre_baterai_remot || '-'}</td></tr>
+            {config.sebelumTerbang.map((field: any) => (
+              <tr key={field.id}><td style={{ width: '40%' }}>{field.label}</td><td>: {data[field.id] || '-'}</td></tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -137,71 +138,44 @@ export const PdfTemplate = React.forwardRef<HTMLDivElement, { data: any }>(({ da
         <h2 style={{ fontSize: '16px', fontWeight: 'bold', textDecoration: 'underline', marginBottom: '5px' }}>SETELAH TERBANG</h2>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <tbody>
-            <tr><td style={{ width: '30%' }}>Baterai pusher</td><td>: {data.post_baterai_pusher || '-'}</td></tr>
-            <tr><td>Baterai VTOL</td><td>: {data.post_baterai_vtol || '-'}</td></tr>
-            <tr><td>Baterai remot</td><td>: {data.post_baterai_remot || '-'}</td></tr>
-            <tr><td style={{ verticalAlign: 'top' }}>Kerusakan</td><td>: {data.kerusakan || '-'}</td></tr>
+            {config.setelahTerbang.map((field: any) => (
+              <tr key={field.id}>
+                <td style={{ width: '40%', verticalAlign: field.type === 'textarea' ? 'top' : 'middle' }}>
+                  {field.label}
+                </td>
+                <td>: {data[field.id] || '-'}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
       {/* Evaluasi */}
       <div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <tbody>
-            <tr>
-              <td style={{ width: '30%', verticalAlign: 'top' }}>Evaluasi</td>
-              <td>:</td>
-            </tr>
-          </tbody>
-        </table>
+        <h2 style={{ fontSize: '16px', fontWeight: 'bold', textDecoration: 'underline', marginBottom: '5px' }}>EVALUASI</h2>
         
         <div style={{ paddingLeft: '20px' }}>
-          <div style={{ marginBottom: '10px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '5px 0' }}>1. Mekanis</h3>
-            <ul style={{ margin: '0 0 0 20px' }}>
-              {data.mekanis_note ? <li>{data.mekanis_note}</li> : <li>-</li>}
-            </ul>
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '5px 0' }}>2. Elektronis</h3>
-            <ul style={{ margin: '0 0 0 20px' }}>
-              {data.elektronis_note ? <li>{data.elektronis_note}</li> : <li>-</li>}
-            </ul>
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '5px 0' }}>3. Telemetri</h3>
-            <ul style={{ margin: '0 0 0 20px' }}>
-              {data.telemetri_note ? <li>{data.telemetri_note}</li> : <li>-</li>}
-            </ul>
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '5px 0' }}>4. Softprog</h3>
-            <ul style={{ margin: '0 0 0 20px' }}>
-              {data.softprog_note ? <li>{data.softprog_note}</li> : <li>-</li>}
-            </ul>
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '5px 0' }}>5. HardProg</h3>
-            <ul style={{ margin: '0 0 0 20px' }}>
-              {data.hardprog_note ? <li>{data.hardprog_note}</li> : <li>-</li>}
-            </ul>
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '5px 0' }}>6. VHC</h3>
-            <ul style={{ margin: '0 0 0 20px' }}>
-              {data.vhc_note ? <li>{data.vhc_note}</li> : <li>-</li>}
-            </ul>
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '5px 0' }}>7. Pilot</h3>
-            <ul style={{ margin: '0 0 0 20px' }}>
-              {data.pilot_note ? <li>{data.pilot_note}</li> : <li>-</li>}
-            </ul>
-          </div>
+          {config.evaluasi.map((item: any) => (
+            <div key={item.id} style={{ marginBottom: '10px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '5px 0' }}>{item.title}</h3>
+              <ul style={{ margin: '0 0 0 20px' }}>
+                {item.fields.map((field: any) => (
+                  <li key={field.id}>{data[field.id] || '-'}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </div>
 
+      {/* Tanda Tangan */}
+      <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ textAlign: 'center', width: '200px' }}>
+          <p style={{ marginBottom: '70px' }}>Mengetahui,</p>
+          <p style={{ fontWeight: 'bold', textDecoration: 'underline' }}>{data.pilot || '...........................................'}</p>
+          <p>Pilot</p>
+        </div>
+      </div>
     </div>
   );
 });

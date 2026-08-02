@@ -7,7 +7,8 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { Loader2, Save, ArrowLeft, RefreshCw, AlertCircle, CheckCircle2, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
-import defaultFormConfig from '@/data/formConfig.json';
+import { getDefaultConfig } from '@/data/defaultConfigs';
+import { TeamSelector } from '@/components/TeamSelector';
 
 type Field = { id: string; label: string; type: string; placeholder?: string; options?: string[] };
 type NestedCategory = { id: string; title: string; fields: Field[] };
@@ -16,8 +17,9 @@ export default function SettingsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
-  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [loadingConfig, setLoadingConfig] = useState(false);
   
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [config, setConfig] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -48,24 +50,29 @@ export default function SettingsPage() {
         if (!email.endsWith('@mail.ugm.ac.id') && !email.endsWith('@ugm.ac.id')) {
           auth.signOut();
           router.push('/Login');
-        } else {
-          fetchConfig();
         }
       }
     });
     return () => unsubscribe();
   }, [router]);
 
-  const fetchConfig = async () => {
+  const fetchConfig = async (teamId: string) => {
     setLoadingConfig(true);
     setErrorMsg("");
     try {
-      const docRef = doc(db, 'settings', 'formConfig');
+      const docRef = doc(db, 'settings', `formConfig_${teamId}`);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         setConfig(docSnap.data());
       } else {
-        setConfig(JSON.parse(JSON.stringify(defaultFormConfig)));
+        // Fallback to global formConfig
+        const fallbackRef = doc(db, 'settings', 'formConfig');
+        const fallbackSnap = await getDoc(fallbackRef);
+        if (fallbackSnap.exists()) {
+          setConfig(fallbackSnap.data());
+        } else {
+          setConfig(JSON.parse(JSON.stringify(getDefaultConfig(teamId))));
+        }
       }
     } catch (err: any) {
       console.error("Error fetching config:", err);
@@ -75,15 +82,21 @@ export default function SettingsPage() {
     }
   };
 
+  const handleTeamChange = (teamId: string) => {
+    if (isSaving) return;
+    setSelectedTeam(teamId);
+    fetchConfig(teamId);
+  };
+
   const handleSave = async () => {
     setErrorMsg("");
     setSuccessMsg("");
     setIsSaving(true);
     
     try {
-      const docRef = doc(db, 'settings', 'formConfig');
+      const docRef = doc(db, 'settings', `formConfig_${selectedTeam}`);
       await setDoc(docRef, config);
-      setSuccessMsg("Konfigurasi berhasil disimpan!");
+      setSuccessMsg(`Konfigurasi tim ${selectedTeam!.toUpperCase()} berhasil disimpan!`);
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err: any) {
       console.error("Error saving config:", err);
@@ -94,8 +107,8 @@ export default function SettingsPage() {
   };
 
   const handleReset = () => {
-    if (confirm("Anda yakin ingin mereset ke konfigurasi bawaan aplikasi? Perubahan Anda yang belum disave akan hilang.")) {
-      setConfig(JSON.parse(JSON.stringify(defaultFormConfig)));
+    if (selectedTeam && confirm("Apakah Anda yakin ingin mereset konfigurasi tim ini ke default? Semua perubahan yang belum disimpan akan hilang.")) {
+      setConfig(JSON.parse(JSON.stringify(getDefaultConfig(selectedTeam))));
     }
   };
 
@@ -286,6 +299,17 @@ export default function SettingsPage() {
     return <div className="min-h-screen flex items-center justify-center text-biruGelap"><Loader2 className="animate-spin w-10 h-10" /></div>;
   }
 
+  if (!selectedTeam) {
+    return (
+      <TeamSelector 
+        onSelect={handleTeamChange} 
+        title="Select Team Settings" 
+        description="Choose the GAMAFORCE sub-team to edit their flight report template." 
+        backHref="/"
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen pb-20 relative pt-28 md:pt-32">
       <div className="absolute top-0 left-0 w-full h-[30vh] bg-gradient-to-b from-biruGelap/10 to-transparent pointer-events-none" />
@@ -295,15 +319,21 @@ export default function SettingsPage() {
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
         </Link>
         
-        <div className="flex justify-between items-end mb-6 sticky top-20 bg-slate-50/80 backdrop-blur-md z-20 py-4 border-b border-biruGelap/10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 sticky top-20 bg-slate-50/80 backdrop-blur-md z-20 py-4 border-b border-biruGelap/10 gap-4">
           <div>
             <h1 className="text-3xl font-bold mb-1 text-biruGelap">Visual Form Builder</h1>
             <p className="text-sm text-biruGelap/70">Tambahkan atau hapus checklist penerbangan dengan mudah.</p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap space-x-3 gap-y-3">
+            <button
+              onClick={() => { setSelectedTeam(null); setConfig(null); }}
+              className="px-4 py-2 rounded-xl text-sm font-semibold border border-biruGelap/20 text-biruGelap bg-white hover:bg-biruGelap/5 transition-all shadow-sm"
+            >
+              Ganti Tim
+            </button>
             <button
               onClick={handleReset}
-              className="flex items-center px-4 py-2 rounded-xl text-sm font-semibold border border-biruGelap/20 text-biruGelap hover:bg-biruGelap/5 transition-all bg-white"
+              className="flex items-center px-4 py-2 rounded-xl text-sm font-semibold border border-biruGelap/20 text-biruGelap hover:bg-biruGelap/5 transition-all bg-white shadow-sm"
             >
               <RefreshCw className="w-4 h-4 mr-2" /> Reset
             </button>

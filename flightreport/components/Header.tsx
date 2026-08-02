@@ -64,7 +64,7 @@ export default function Header() {
         <div className="flex w-full justify-between items-center">
           {/* Logo */}
           <Link href="/">
-            <Image src="/GAMAFORCE.svg" alt="GAMAFORCE Logo" width={160} height={60} className="max-md:w-32 max-md:h-auto" />
+            <Image src="/GAMAFORCE.svg" alt="GAMAFORCE Logo" width={160} height={60} priority style={{ height: 'auto' }} className="max-md:w-32" />
           </Link>
 
           {/* Navigation - Show Sign In button only if not logged in and not on login page */}

@@ -1,4 +1,4 @@
-{
+const khageswaraConfig = {
   "generalInfo": [
     { "id": "hari_tanggal", "label": "Hari, tanggal", "type": "date" },
     { "id": "tempat", "label": "Tempat", "type": "text" },
@@ -126,4 +126,59 @@
       ]
     }
   ]
-}
+};
+
+// --- RASAYANA (Racing Drone) ---
+export const rasayanaConfig = {
+  ...khageswaraConfig,
+  spesifikasi: [
+    { id: "motor", label: "Motor", type: "text", placeholder: "Contoh: XNova 2207" },
+    { id: "propeller", label: "Propeller", type: "text" },
+    { id: "esc", label: "ESC", type: "text" },
+    { id: "baterai", label: "Baterai", type: "text" }
+  ],
+  sebelumTerbang: [
+    { id: "pre_baterai", label: "Baterai Drone (%)", type: "text" },
+    { id: "pre_baterai_remot", label: "Baterai remot (V)", type: "text" }
+  ],
+  setelahTerbang: [
+    { id: "post_baterai", label: "Baterai Drone (%)", type: "text" },
+    { id: "post_baterai_remot", label: "Baterai remot (V)", type: "text" },
+    { id: "kerusakan", label: "Kerusakan", type: "textarea" }
+  ]
+};
+
+// --- FIACHRA (Fixed Wing) ---
+export const fiachraConfig = {
+  ...khageswaraConfig,
+  spesifikasi: [
+    { id: "motor_pusher", label: "Motor Utama", type: "text" },
+    { id: "propeller", label: "Propeller", type: "text" },
+    { id: "esc", label: "ESC", type: "text" },
+    { id: "baterai", label: "Baterai Utama", type: "text" }
+  ],
+  sebelumTerbang: [
+    { id: "pre_baterai", label: "Baterai Utama (%)", type: "text" },
+    { id: "pre_baterai_remot", label: "Baterai remot (V)", type: "text" }
+  ],
+  setelahTerbang: [
+    { id: "post_baterai", label: "Baterai Utama (%)", type: "text" },
+    { id: "post_baterai_remot", label: "Baterai remot (V)", type: "text" },
+    { id: "kerusakan", label: "Kerusakan", type: "textarea" }
+  ]
+};
+
+// --- VAYUASTRA & VIRACHAKRA (Base copies for now) ---
+export const vayuastraConfig = { ...khageswaraConfig };
+export const virachakraConfig = { ...khageswaraConfig };
+
+export const getDefaultConfig = (teamId: string) => {
+  switch (teamId.toLowerCase()) {
+    case 'khageswara': return khageswaraConfig;
+    case 'rasayana': return rasayanaConfig;
+    case 'fiachra': return fiachraConfig;
+    case 'vayuastra': return vayuastraConfig;
+    case 'virachakra': return virachakraConfig;
+    default: return khageswaraConfig;
+  }
+};

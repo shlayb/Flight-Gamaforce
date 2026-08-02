@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, FileDown, CheckCircle2, Loader2 } from 'lucide-react';
-import defaultFormConfig from '../../../data/formConfig.json';
+import { getDefaultConfig } from '../../../data/defaultConfigs';
 import { db, auth } from '../../../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
@@ -18,7 +18,7 @@ export default function EditReport() {
   const [user, loadingAuth] = useAuthState(auth);
   
   const [formData, setFormData] = useState<any>({});
-  const [formConfig, setFormConfig] = useState<any>(defaultFormConfig);
+  const [formConfig, setFormConfig] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,42 +26,43 @@ export default function EditReport() {
   const pdfRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!loadingAuth) {
-      if (!user) {
-        router.push('/Login');
-      } else {
-        const email = user.email || '';
-        if (!email.endsWith('@mail.ugm.ac.id') && !email.endsWith('@ugm.ac.id')) {
-          auth.signOut();
-          router.push('/Login');
-        } else {
-          const fetchConfig = async () => {
-            try {
-              const docRef = doc(db, 'settings', 'formConfig');
-              const docSnap = await getDoc(docRef);
-              if (docSnap.exists()) {
-                setFormConfig(docSnap.data());
-              }
-            } catch (err) {
-              console.error("Error fetching config:", err);
-            } finally {
-              setLoadingConfig(false);
-            }
-          };
-          fetchConfig();
-        }
-      }
+    if (loadingAuth) return;
+    if (!user) {
+      router.push('/Login');
+      return;
     }
-  }, [user, loadingAuth, router]);
+    const email = user.email || '';
+    if (!email.endsWith('@mail.ugm.ac.id') && !email.endsWith('@ugm.ac.id')) {
+      auth.signOut();
+      router.push('/Login');
+      return;
+    }
 
-  useEffect(() => {
-    const fetchDoc = async () => {
+    const fetchData = async () => {
       if (!id) return;
       try {
         const docRef = doc(db, 'flight_reports', id as string);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setFormData(docSnap.data());
+          const data = docSnap.data();
+          setFormData(data);
+          
+          // Fetch corresponding team config
+          const team = data.team || 'khageswara';
+          const configRef = doc(db, 'settings', `formConfig_${team}`);
+          const configSnap = await getDoc(configRef);
+          
+          if (configSnap.exists()) {
+            setFormConfig(configSnap.data());
+          } else {
+            const fallbackRef = doc(db, 'settings', 'formConfig');
+            const fallbackSnap = await getDoc(fallbackRef);
+            if (fallbackSnap.exists()) {
+              setFormConfig(fallbackSnap.data());
+            } else {
+              setFormConfig(getDefaultConfig(team));
+            }
+          }
         } else {
           alert('Laporan tidak ditemukan!');
           router.push('/history');
@@ -70,10 +71,12 @@ export default function EditReport() {
         console.error("Error fetching report:", error);
       } finally {
         setIsLoading(false);
+        setLoadingConfig(false);
       }
     };
-    fetchDoc();
-  }, [id, router]);
+
+    fetchData();
+  }, [user, loadingAuth, id, router]);
 
   const handleInputChange = (fieldId: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [fieldId]: value }));
@@ -311,7 +314,7 @@ export default function EditReport() {
       </div>
 
       <div style={{ overflow: 'hidden', height: 0, width: 0 }}>
-        <PdfTemplate ref={pdfRef} data={formData} />
+        <PdfTemplate ref={pdfRef} data={formData} config={formConfig} />
       </div>
     </div>
   );

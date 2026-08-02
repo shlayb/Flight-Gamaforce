@@ -4,18 +4,20 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, FileDown, CheckCircle2, Loader2 } from 'lucide-react';
-import defaultFormConfig from '../../data/formConfig.json';
+import { getDefaultConfig } from '../../data/defaultConfigs';
 import { db, auth } from '../../lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { PdfTemplate } from '../../components/PdfTemplate';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { TeamSelector } from '../../components/TeamSelector';
 
 export default function NewReport() {
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [formData, setFormData] = useState<any>({});
-  const [formConfig, setFormConfig] = useState<any>(defaultFormConfig);
-  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [formConfig, setFormConfig] = useState<any>(null);
+  const [loadingConfig, setLoadingConfig] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const pdfRef = useRef<HTMLDivElement>(null);
@@ -31,29 +33,39 @@ export default function NewReport() {
         if (!email.endsWith('@mail.ugm.ac.id') && !email.endsWith('@ugm.ac.id')) {
           auth.signOut();
           router.push('/Login');
-        } else {
-          const fetchConfig = async () => {
-            try {
-              const docRef = doc(db, 'settings', 'formConfig');
-              const docSnap = await getDoc(docRef);
-              if (docSnap.exists()) {
-                setFormConfig(docSnap.data());
-              }
-            } catch (err) {
-              console.error("Error fetching config:", err);
-            } finally {
-              setLoadingConfig(false);
-            }
-          };
-          fetchConfig();
         }
       }
     }
   }, [user, loading, router]);
 
-  if (loading || !user || loadingConfig) {
-    return <div className="min-h-screen flex items-center justify-center text-white"><Loader2 className="animate-spin w-10 h-10" /></div>;
-  }
+  const handleSelectTeam = async (teamId: string) => {
+    setSelectedTeam(teamId);
+    setLoadingConfig(true);
+    setFormData((prev: any) => ({ ...prev, team: teamId }));
+    
+    try {
+      const docRef = doc(db, 'settings', `formConfig_${teamId}`);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setFormConfig(docSnap.data());
+      } else {
+        // Fallback to legacy formConfig if exists
+        const fallbackRef = doc(db, 'settings', 'formConfig');
+        const fallbackSnap = await getDoc(fallbackRef);
+        if (fallbackSnap.exists()) {
+          setFormConfig(fallbackSnap.data());
+        } else {
+          setFormConfig(getDefaultConfig(teamId));
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching config:", err);
+    } finally {
+      setLoadingConfig(false);
+    }
+  };
+
+
 
   const handleInputChange = (id: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [id]: value }));
@@ -65,6 +77,7 @@ export default function NewReport() {
       // 1. Save to Firebase
       await addDoc(collection(db, 'flight_reports'), {
         ...formData,
+        team: selectedTeam,
         createdAt: serverTimestamp(),
       });
 
@@ -198,6 +211,25 @@ export default function NewReport() {
     );
   };
 
+  if (loading || !user) {
+    return <div className="min-h-screen flex items-center justify-center text-biruGelap"><Loader2 className="animate-spin w-10 h-10" /></div>;
+  }
+
+  if (!selectedTeam) {
+    return (
+      <TeamSelector 
+        onSelect={handleSelectTeam} 
+        title="Select Your Team" 
+        description="Choose the GAMAFORCE sub-team to load their specific flight report form configuration." 
+        backHref="/"
+      />
+    );
+  }
+
+  if (loadingConfig) {
+    return <div className="min-h-screen flex items-center justify-center text-biruGelap"><Loader2 className="animate-spin w-10 h-10" /></div>;
+  }
+
   return (
     <div className="min-h-screen pb-20 relative pt-28 md:pt-32">
       <div className="absolute top-0 left-0 w-full h-[30vh] bg-gradient-to-b from-biruGelap/10 to-transparent pointer-events-none" />
@@ -294,7 +326,7 @@ export default function NewReport() {
 
       {/* Hidden PDF Template Container */}
       <div style={{ overflow: 'hidden', height: 0, width: 0 }}>
-        <PdfTemplate ref={pdfRef} data={formData} />
+        <PdfTemplate ref={pdfRef} data={formData} config={formConfig} />
       </div>
     </div>
   );
